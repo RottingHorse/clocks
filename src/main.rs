@@ -54,6 +54,24 @@ impl Clock {
             SetSystemTime(systime_ptr);
         }
     }
+
+    #[cfg(not(windows))]
+    fn set<Tz: TimeZone>(t: DateTime<Tz>) -> () {
+        use libc::{timeval, time_t, suseconds_t};
+        use libc::{settimeofday, timezone};
+
+        let t = t.with_timezone(&Local);
+        let mut u: timeval = unsafe { zeroed() };
+
+        u.tv_sec = t.timestamp() as time_t;
+        u.tv_usec =
+            t.timestamp_subsec_micros() as suseconds_t;
+
+        unsafe {
+            let mock_tz: *const timezone = std::ptr::null();
+            settimeofday(&u as *const timeval, mock_tz);
+        }
+    }
 }
 
 fn main() {

@@ -27,7 +27,6 @@ impl Clock {
             Weekday::Fri => 5,
             Weekday::Sat => 6,
             Weekday::Sun => 7,
-
         };
 
         let mut ns = t.nanosecond();
@@ -36,7 +35,7 @@ impl Clock {
 
         if is_leap_second {
             ns -= 1_000_000_000;
-            leap +=1;
+            leap += 1;
         }
 
         systime.wYear = t.year() as WORD;
@@ -46,7 +45,7 @@ impl Clock {
         systime.wHour = t.hour() as WORD;
         systime.wMinute = t.minute() as WORD;
         systime.wSecond = (leap + t.second()) as WORD;
-        systime.wMilliseconds = (ns/1_000_000) as WORD;
+        systime.wMilliseconds = (ns / 1_000_000) as WORD;
 
         let systime_ptr = &systime as *const SYSTEMTIME;
 
@@ -104,7 +103,21 @@ fn main() {
     let std = args.value_of("std").unwrap();
 
     if action == "set" {
-        unimplemented!()
+        let t_ = args.value_of("datetime").unwrap();
+
+        let parser = match std {
+            "rfc2822" => DateTime::parse_from_rfc2822,
+            "rfc3339" => DateTime::parse_from_rfc3339,
+            _ => unimplemented!(),
+        };
+
+        let err_msg = format!(
+            "Unable to parse {} according to {}",
+            t_, std
+        );
+        let t = parser(t_).expect(&err_msg);
+
+        Clock::set(t)
     }
 
     let now = Clock::get();
